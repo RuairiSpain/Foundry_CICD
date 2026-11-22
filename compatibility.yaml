@@ -1,0 +1,18 @@
+schemaVersion: 1
+validated: 2026-11-21
+entries:
+  - component: azure-ai-projects
+    version: 2.11.0
+    feature: Python project client and agent operations
+    lifecycle: verify-current-at-implementation
+    source: https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme?view=azure-python
+  - component: microsoft-foundry-hosted-agents
+    version: service-managed
+    feature: Hosted-agent deployment and azd CI/CD
+    lifecycle: preview
+    source: https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/set-up-ci-cd-cli
+  - component: github-custom-agents
+    version: service-managed
+    feature: Repository custom agent profiles and VS Code availability
+    lifecycle: verify-current-at-implementation
+    source: https://docs.github.com/copilot/concepts/agents/coding-agent/about-custom-agents

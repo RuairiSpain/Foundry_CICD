@@ -1,0 +1,28 @@
+# TEMPLATE: installer renders reviewed full action SHAs and environment variables.
+name: Deploy Foundry release
+on:
+  workflow_dispatch:
+    inputs:
+      release_id: {description: Immutable release ID, required: true, type: string}
+      environment: {description: Target GitHub Environment, required: true, type: choice, options: [development, test, production]}
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@REVIEWED_FULL_SHA
+      - name: Azure login with OIDC
+        uses: azure/login@REVIEWED_FULL_SHA
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy existing release
+        run: ./scripts/deploy-release.sh --release "${{ inputs.release_id }}" --environment "${{ inputs.environment }}"

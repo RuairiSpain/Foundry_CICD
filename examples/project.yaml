@@ -1,0 +1,57 @@
+apiVersion: foundryops.io/v1
+kind: FoundryProject
+metadata:
+  name: sample-agent
+  path: .
+  owners:
+    - org/platform-team
+spec:
+  agent:
+    type: hosted
+    source: src/agent
+    compatibilityProfile: current-supported
+  branching:
+    strategy: trunk
+  environments:
+    - name: dev
+      azure:
+        subscriptionId: 00000000-0000-0000-0000-000000000001
+        resourceGroup: rg-sample-dev
+        location: westeurope
+        credentialReference: github-oidc-dev
+      securityTier: flexible
+      githubEnvironment: development
+    - name: test
+      azure:
+        subscriptionId: 00000000-0000-0000-0000-000000000002
+        resourceGroup: rg-sample-test
+        location: westeurope
+        credentialReference: github-oidc-test
+      securityTier: hardening-preview
+      githubEnvironment: test
+    - name: production
+      azure:
+        subscriptionId: 00000000-0000-0000-0000-000000000003
+        resourceGroup: rg-sample-production
+        location: westeurope
+        credentialReference: github-oidc-production
+      securityTier: hardened
+      githubEnvironment: production
+  modules:
+    core: true
+    deployment: true
+    evaluations: true
+    branching: true
+    bestPractices: learning
+    security: true
+    projects: true
+    cost: false
+    drift: true
+    rollout: false
+    provenance: true
+    docs: true
+    auditExport: false
+  policyPacks:
+    - name: microsoft-foundry-golden-path
+      version: 1.0.0
+      mode: learning

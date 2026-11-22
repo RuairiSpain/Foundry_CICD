@@ -1,0 +1,29 @@
+name: Autonomous implementation task
+description: Create a bounded task for the orchestrator and specialist agents
+title: "[TASK] "
+labels: [agent-task]
+body:
+  - type: input
+    id: story
+    attributes: {label: Story ID, placeholder: US-A01}
+    validations: {required: true}
+  - type: textarea
+    id: objective
+    attributes: {label: Single objective, description: One observable deliverable.}
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes: {label: Allowed and forbidden paths}
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes: {label: Acceptance criteria, description: Use observable Given/When/Then or equivalent.}
+    validations: {required: true}
+  - type: textarea
+    id: checks
+    attributes: {label: Required checks and completion evidence}
+    validations: {required: true}
+  - type: textarea
+    id: dependencies
+    attributes: {label: Dependencies, ADRs, contracts and security considerations}
+    validations: {required: true}

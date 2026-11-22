@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/foundryops/schemas/task/1-0-0",
+  "title": "Autonomous implementation task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "story", "objective", "phase", "primaryAgent", "allowedPaths", "inputs", "acceptanceCriteria", "requiredChecks", "completionEvidence"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$"},
+    "story": {"type": "string", "pattern": "^US-[A-Z][0-9]{2}$"},
+    "objective": {"type": "string", "minLength": 10},
+    "phase": {"type": "integer", "minimum": 0, "maximum": 9},
+    "primaryAgent": {"enum": ["solution-architect", "foundry-sdk-expert", "github-sdk-expert", "github-automation", "github-app-logic", "python-code", "yaml-config", "testing-expert", "security-expert", "ui-ux-expert", "documentation-expert", "e2e-validation"]},
+    "reviewAgents": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "allowedPaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "forbiddenPaths": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "inputs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "dependencies": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "acceptanceCriteria": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 5}},
+    "requiredChecks": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "security": {"type": "array", "items": {"type": "string"}},
+    "completionEvidence": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "maxRepairAttempts": {"type": "integer", "minimum": 0, "maximum": 2, "default": 2}
+  }
+}

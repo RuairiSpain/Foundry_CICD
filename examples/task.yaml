@@ -1,0 +1,33 @@
+id: P1-01
+story: US-A01
+objective: Verify GitHub webhook signatures against raw request bytes and reject replayed deliveries.
+phase: 1
+primaryAgent: github-app-logic
+reviewAgents: [security-expert, testing-expert]
+allowedPaths:
+  - apps/github-app/src/webhooks/**
+  - apps/github-app/test/webhooks/**
+forbiddenPaths:
+  - docs/architecture/ADRs/**
+  - infra/**
+inputs:
+  - docs/security/THREAT-MODEL.md
+  - docs/architecture/COMPONENT-CONTRACTS.md
+  - schemas/task.schema.json
+dependencies: []
+acceptanceCriteria:
+  - Valid SHA-256 signatures are accepted using the raw request body.
+  - Invalid signatures are rejected before JSON parsing.
+  - Duplicate delivery IDs produce no duplicate command.
+requiredChecks:
+  - pnpm lint
+  - pnpm typecheck
+  - pnpm test:unit
+  - pnpm test:security
+security:
+  - Use constant-time comparison and never log the webhook secret or body.
+completionEvidence:
+  - Unit and negative test results
+  - Type and lint output
+  - Coverage at or above 95 percent
+maxRepairAttempts: 2

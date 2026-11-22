@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/foundryops/schemas/project/1-0-0",
+  "title": "Foundry GitHub App project configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "foundryops.io/v1"},
+    "kind": {"const": "FoundryProject"},
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "path", "owners"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{2,62}$"},
+        "path": {"type": "string", "pattern": "^(\\.|[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)$"},
+        "owners": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["agent", "branching", "environments", "modules"],
+      "properties": {
+        "agent": {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "source"],
+          "properties": {
+            "type": {"enum": ["code-based", "hosted"]},
+            "source": {"type": "string", "minLength": 1},
+            "compatibilityProfile": {"type": "string", "default": "current-supported"}
+          }
+        },
+        "branching": {
+          "type": "object", "additionalProperties": false,
+          "required": ["strategy"],
+          "properties": {"strategy": {"enum": ["trunk", "gitflow"]}}
+        },
+        "environments": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {"$ref": "#/$defs/environment"}
+        },
+        "modules": {
+          "type": "object", "additionalProperties": false,
+          "required": ["core", "deployment", "evaluations", "branching", "security", "provenance"],
+          "properties": {
+            "core": {"const": true}, "deployment": {"type": "boolean"}, "evaluations": {"type": "boolean"},
+            "branching": {"type": "boolean"}, "bestPractices": {"$ref": "#/$defs/policyMode"},
+            "security": {"type": "boolean"}, "projects": {"type": "boolean"}, "cost": {"type": "boolean"},
+            "drift": {"type": "boolean"}, "rollout": {"type": "boolean"}, "provenance": {"type": "boolean"},
+            "docs": {"type": "boolean"}, "auditExport": {"type": "boolean"}
+          }
+        },
+        "policyPacks": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["name", "version", "mode"],
+            "properties": {"name": {"type": "string"}, "version": {"type": "string"}, "mode": {"$ref": "#/$defs/policyMode"}}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "policyMode": {"enum": ["off", "advisory", "learning", "enforced"]},
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "azure", "securityTier"],
+      "properties": {
+        "name": {"enum": ["dev", "test", "production"]},
+        "azure": {
+          "type": "object", "additionalProperties": false,
+          "required": ["subscriptionId", "resourceGroup", "location", "credentialReference"],
+          "properties": {
+            "subscriptionId": {"type": "string", "minLength": 1},
+            "resourceGroup": {"type": "string", "minLength": 1},
+            "location": {"type": "string", "minLength": 1},
+            "credentialReference": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"}
+          }
+        },
+        "securityTier": {"enum": ["flexible", "hardening-preview", "hardened"]},
+        "githubEnvironment": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
