@@ -25,6 +25,18 @@ Assets: GitHub App private key/webhook secret, installation tokens, customer ide
 
 Webhook verification, tenant isolation, secrets protection, authorization, audit for consequential actions, safe workflow permissions and Production identity separation cannot be disabled in any environment tier.
 
+## Foundation implementation boundaries
+
+The local demonstration store does not implement a tenant registry, row-level
+security, or actor authorization. Its queued checks are database records only,
+not GitHub Check Runs. The App JWT and repository-scoped token helpers do not
+authenticate users or authorize deployments and have not been verified against
+a real installation. Read-only GitHub Environment inspection is not an
+authorization decision: branch-policy patterns, bypass settings, plan
+eligibility, reviewer membership, and actual approval are not verified. The
+deployment workflow remains blocked. Do not expose the local gateway or worker
+publicly.
+
 ## Security review triggers
 
 New GitHub/Azure permission, identity flow, public endpoint, persistence of new data class, model/tool capability, external dependency, direct reconcile action, exception type, deployment provider or cross-tenant feature requires threat-model update and security-agent review.

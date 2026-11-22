@@ -2,6 +2,12 @@
 
 Every coding assignment is a YAML document validated by `schemas/task.schema.json` and attached to a GitHub Issue.
 
+The task schema is version 2. Tasks written for version 1 must explicitly add
+`forbiddenPaths` (an empty list if no additional paths are forbidden) and at
+least one nonblank security consideration, replace blank scope/evidence entries,
+and use recognized agent names for reviewers. The validator uses version 2;
+schema validation alone does not enforce filesystem scope or execute checks.
+
 ## Required fields
 
 - `id`, `story`, `objective`, `phase`, `primaryAgent`.
