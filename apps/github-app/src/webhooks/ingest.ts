@@ -75,6 +75,9 @@ export async function ingestWebhook(
   ) {
     return { status: "rejected", code: "invalid_payload" };
   }
+  if (payload.after === "0".repeat(40)) {
+    return { status: "ignored" };
+  }
   const result = await inbox.insert({
     deliveryId: request.deliveryId.toLowerCase(),
     installationId: payload.installation.id,

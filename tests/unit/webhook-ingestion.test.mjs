@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
 import { ingestWebhook } from "../../apps/github-app/src/webhooks/ingest.ts";
+import { PostgresWebhookInbox } from "../../apps/github-app/src/webhooks/postgres-inbox.ts";
 
 const secret = "local-test-only";
 const deliveryId = "72d3162e-cc78-11e3-81ab-4c9367dc0958";
@@ -47,6 +48,38 @@ test("records signed push metadata once and recognizes redelivery", async () => 
   assert.equal(event.ref, "refs/heads/main");
   assert.equal(event.commitSha, payload.after);
   assert.equal("body" in event, false);
+});
+
+test("ignores signed deletions without writing to the inbox or outbox", async () => {
+  let queries = 0;
+  const inbox = new PostgresWebhookInbox({ async query() { queries++; throw new Error("unexpected write"); } });
+  const deletion = { ...payload, after: "0".repeat(40) };
+  assert.deepEqual(await ingestWebhook(secret, request(deletion), inbox), { status: "ignored" });
+  assert.deepEqual(await ingestWebhook(secret, request({ ...deletion, ref: "refs/tags/v1" }), inbox),
+    { status: "ignored" });
+  assert.equal(queries, 0);
+
+  assert.deepEqual(await ingestWebhook(secret, request({ ...deletion, repository: { id: 0 } }), inbox),
+    { status: "rejected", code: "invalid_payload" });
+  assert.deepEqual(await ingestWebhook(secret, request({ ...deletion, after: "0".repeat(39) }), inbox),
+    { status: "rejected", code: "invalid_payload" });
+  assert.deepEqual(await ingestWebhook(secret, request(deletion, { signature: "invalid" }), inbox),
+    { status: "rejected", code: "invalid_signature" });
+  assert.equal(queries, 0);
+});
+
+test("accepts a nonzero SHA adjacent to the deletion sentinel", async () => {
+  const inbox = memoryInbox();
+  const after = `${"0".repeat(39)}1`;
+  assert.deepEqual(await ingestWebhook(secret, request({ ...payload, after }), inbox), { status: "accepted" });
+  assert.equal(inbox.events.get(deliveryId).commitSha, after);
+});
+
+test("continues normalizing uppercase commit SHAs", async () => {
+  const inbox = memoryInbox();
+  assert.deepEqual(await ingestWebhook(secret, request({ ...payload, after: payload.after.toUpperCase() }), inbox),
+    { status: "accepted" });
+  assert.equal(inbox.events.get(deliveryId).commitSha, payload.after);
 });
 
 test("rejects forged signatures before parsing or persistence", async () => {

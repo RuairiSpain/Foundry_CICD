@@ -39,7 +39,8 @@ test("local gateway dispatches signed events to durable operations and mock chec
     once(child, "exit").then(([code]) => { throw new Error(`gateway exited before readiness: ${code}`); }),
   ]);
   assert.match(address, /^http:\/\/127\.0\.0\.1:\d+$/);
-  const body = JSON.stringify({ installation: { id: 11 }, repository: { id: 12 }, ref: "refs/heads/main", after: "0".repeat(40) });
+  const commitSha = "a".repeat(40);
+  const body = JSON.stringify({ installation: { id: 11 }, repository: { id: 12 }, ref: "refs/heads/main", after: commitSha });
   const signature = `sha256=${createHmac("sha256", "integration-only").update(body).digest("hex")}`;
   const deliveryId = randomUUID();
   const response = await fetch(`${address}/github/webhooks`, { method: "POST", body, headers: {
@@ -50,6 +51,18 @@ test("local gateway dispatches signed events to durable operations and mock chec
   } });
   assert.equal(response.status, 202);
   assert.equal((await pool.query("SELECT delivery_id FROM webhook_outbox WHERE delivery_id=$1", [deliveryId])).rowCount, 1);
+  const deletionId = randomUUID();
+  const deletion = JSON.stringify({ ...JSON.parse(body), after: "0".repeat(40) });
+  const deletionSignature = `sha256=${createHmac("sha256", "integration-only").update(deletion).digest("hex")}`;
+  const deletionResponse = await fetch(`${address}/github/webhooks`, { method: "POST", body: deletion, headers: {
+    "content-type": "application/json",
+    "x-hub-signature-256": deletionSignature,
+    "x-github-event": "push",
+    "x-github-delivery": deletionId,
+  } });
+  assert.equal(deletionResponse.status, 202);
+  assert.equal((await pool.query("SELECT delivery_id FROM webhook_inbox WHERE delivery_id=$1", [deletionId])).rowCount, 0);
+  assert.equal((await pool.query("SELECT delivery_id FROM webhook_outbox WHERE delivery_id=$1", [deletionId])).rowCount, 0);
   const missingWorker = spawnSync(process.execPath, [
     fileURLToPath(new URL("../../apps/github-app/src/dev-dispatch.ts", import.meta.url)),
     "11",
@@ -64,8 +77,10 @@ test("local gateway dispatches signed events to durable operations and mock chec
   ], { env: { ...process.env, DATABASE_URL: scoped.toString() }, encoding: "utf8", timeout: 10000 });
   assert.equal(dispatch.status, 0, dispatch.stderr);
   const operation = await pool.query("SELECT installation_id, repository_id, commit_sha FROM dev_push_operations WHERE delivery_id=$1", [deliveryId]);
-  assert.deepEqual(operation.rows, [{ installation_id: "11", repository_id: "12", commit_sha: "0".repeat(40) }]);
+  assert.deepEqual(operation.rows, [{ installation_id: "11", repository_id: "12", commit_sha: commitSha }]);
+  assert.equal((await pool.query("SELECT delivery_id FROM dev_push_operations WHERE delivery_id=$1", [deletionId])).rowCount, 0);
   const checks = await pool.query("SELECT status FROM dev_mock_checks");
   assert.deepEqual(checks.rows, [{ status: "queued" }]);
+  assert.equal((await pool.query("SELECT commit_sha FROM dev_mock_checks WHERE commit_sha=$1", ["0".repeat(40)])).rowCount, 0);
   assert.equal((await pool.query("SELECT published_at IS NOT NULL AS published FROM webhook_outbox WHERE delivery_id=$1", [deliveryId])).rows[0].published, true);
 });

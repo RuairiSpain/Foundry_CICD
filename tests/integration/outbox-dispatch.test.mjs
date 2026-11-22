@@ -23,7 +23,7 @@ test("outbox dispatch is tenant-scoped, retryable, and guarded by leases", async
   const inbox = new PostgresWebhookInbox(pool);
   const event = {
     deliveryId: randomUUID(), installationId: "123", repositoryId: "456",
-    ref: "refs/heads/main", commitSha: "0".repeat(40), bodyDigest: "a".repeat(64),
+    ref: "refs/heads/main", commitSha: "a".repeat(40), bodyDigest: "a".repeat(64),
   };
   await inbox.insert(event);
   await inbox.insert({ ...event, deliveryId: randomUUID(), installationId: "999" });
@@ -64,7 +64,7 @@ test("a stale publisher cannot acknowledge an event claimed by another worker", 
   await pool.query(await readFile(new URL("../../apps/github-app/migrations/001_webhook_inbox.sql", import.meta.url), "utf8"));
   const event = {
     deliveryId: randomUUID(), installationId: "123", repositoryId: "456",
-    ref: "refs/heads/main", commitSha: "0".repeat(40), bodyDigest: "b".repeat(64),
+    ref: "refs/heads/main", commitSha: "b".repeat(40), bodyDigest: "b".repeat(64),
   };
   await new PostgresWebhookInbox(pool).insert(event);
   const dispatcher = new PostgresOutboxDispatcher(pool);

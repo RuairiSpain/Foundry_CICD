@@ -46,6 +46,17 @@ test("accepts a signed push and rejects forged or unsupported HTTP requests", as
   assert.equal(stored.length, 1);
 });
 
+test("acknowledges a signed deletion without writing an event", async (t) => {
+  const inbox = { async insert() { assert.fail("deletion must not be persisted"); } };
+  const { url } = await serve(t, inbox);
+  const deletion = JSON.stringify({ ...JSON.parse(body), after: "0".repeat(40) });
+  const deletionSignature = `sha256=${createHmac("sha256", secret).update(deletion).digest("hex")}`;
+  const response = await fetch(`${url}/github/webhooks`, {
+    method: "POST", headers: headers({ "x-hub-signature-256": deletionSignature }), body: deletion,
+  });
+  assert.equal(response.status, 202);
+});
+
 test("surfaces storage failures as 503 without leaking payloads or internal details", async (t) => {
   const inbox = { async insert() { throw new Error("sensitive provider details"); } };
   const { url, errors } = await serve(t, inbox);
