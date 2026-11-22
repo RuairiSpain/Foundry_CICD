@@ -95,6 +95,48 @@ PostgreSQL database. The separate CI dependency audit is not run by this command
 The checked-in OpenAPI contract currently describes only health endpoints; after
 changing those endpoints, regenerate it with `python scripts/export-openapi.py`.
 
+### Developer quality feedback
+
+The existing Foundation checks workflow runs automatically on pull requests and
+pushes to `main`. It installs the hashed Python lock and npm lock, runs
+`npm audit --audit-level=high`, Node combined unit/integration coverage and
+type checks, example schema validation, Python lint, format and strict type
+checks, the OpenAPI snapshot check, and Python unit/integration coverage.
+Both coverage gates require 95% lines; the Node figure is combined coverage.
+Open the failing PR check and its Actions run for the failing step and logs.
+These are existing checks; this change adds no custom annotations or agents.
+
+For local feedback, install the locked dependencies and use the isolated
+PostgreSQL setup above. `npm run check` runs the full local quality sequence
+but does not run the audit; run `npm audit --audit-level=high` separately.
+Individual commands include:
+
+```shell
+npm test
+npm run test:integration
+npm run test:coverage
+npm run typecheck
+python -m ruff check services/control-plane/src scripts/export-openapi.py tests/python tests/python_integration
+python -m ruff format --check services/control-plane/src scripts/export-openapi.py tests/python tests/python_integration
+python -m mypy --strict services/control-plane/src scripts/export-openapi.py
+python scripts/export-openapi.py --check
+python -m pytest tests/python
+python -m pytest tests/python tests/python_integration
+```
+
+Set `PYTHONPATH` and `TEST_DATABASE_URL` as described above; integration and
+combined coverage commands require the disposable local database.
+
+The new `.github/dependabot.yml` schedules weekly version-update PRs for the
+root npm package and GitHub Actions workflows. Dependabot must be available
+and permitted to create PRs in repository settings, and the configuration
+must be on the default branch. Review each PR and its normal checks; action
+updates must retain reviewed full-SHA pins. This does not enable auto-merge or
+configure security/code scanning. Python updates are intentionally omitted:
+`requirements.lock` is a hash-pinned uv export, and consistent regeneration
+alongside `pyproject.toml` has not been verified for Dependabot pip updates.
+Review and regenerate the Python lock separately until that is established.
+
 Validation checks the JSON Schema only; it does not confirm permissions,
 environment protection, Azure resources, module dependencies or deployment
 readiness. Production configuration must use the hardened tier; per-rule
