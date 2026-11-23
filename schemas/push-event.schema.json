@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:foundry-release-platform:push-event:v1",
+  "title": "Normalized GitHub push event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deliveryId", "installationId", "repositoryId", "ref", "commitSha", "bodyDigest"],
+  "properties": {
+    "deliveryId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+    },
+    "installationId": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "repositoryId": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "ref": { "type": "string", "pattern": "^refs/[^\\u0000-\\u0020\\u007f]{1,250}$" },
+    "commitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "bodyDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

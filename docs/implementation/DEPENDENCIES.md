@@ -24,6 +24,32 @@
 | TypeScript | Node LTS, strict TypeScript, chosen web framework | official docs |
 | IaC | current Bicep CLI and Azure verified modules where appropriate | Microsoft Learn |
 
+## Foundation-only dependencies
+
+- The GitHub Environment inspection adapter uses the read-only REST endpoint:
+  <https://docs.github.com/en/rest/deployments/environments#get-an-environment>.
+  Rule availability depends on the repository's plan and visibility. The
+  adapter does not prove deployment eligibility or verify branch patterns.
+- The GitHub installation inspection adapter uses the App-authenticated REST
+  endpoint documented at <https://docs.github.com/en/rest/apps/apps#get-an-installation-for-the-authenticated-app>.
+  It does not cache, authorize users, or verify repository selection.
+- The GitHub Checks adapter implements the create and update endpoints using
+  the versioned REST API. GitHub requires a GitHub App with Checks write access:
+  <https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28>.
+  The adapter is not connected to the worker or verified against a real App.
+  A creation request with an uncertain result must be reconciled before retry.
+  The read-only lookup returns all matching IDs it sees and rejects inconsistent
+  pagination, but GitHub can omit older check suites and concurrent mutations
+  can change the listing. An empty lookup does not prove a retry is safe; no
+  automatic duplicate prevention is implemented.
+- `pg8000` is used by the local demonstration worker and integration tests.
+  Its pure-Python distribution supports the local Windows ARM development
+  environment. Production persistence and its driver choice remain unapproved.
+- `c8` measures the combined Node unit and integration test coverage. Its
+  development-only `test-exclude` dependencies are overridden to patched
+  `glob` and `minimatch` releases; re-evaluate these overrides when upstream
+  supports the patched versions.
+
 ## Compatibility matrix record
 
 Maintain machine-readable `compatibility.yaml` with SDK package/version, API version, feature, Foundry agent type, deployment mode, Azure region constraints, preview/GA state, validation date, source URL and test fixture. A stale/unknown entry produces an actionable block for Production when the feature is mandatory.

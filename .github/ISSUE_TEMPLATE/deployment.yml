@@ -1,0 +1,25 @@
+name: Deployment request
+description: Request consideration of an existing release for Stage or Production.
+title: "[Deployment] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submitting this issue does not deploy a release and does not authorize deployment.
+        Deployment requires separate authorization and applicable protections.
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Target environment
+      options:
+        - Stage
+        - Production
+    validations:
+      required: true
+  - type: input
+    id: release
+    attributes:
+      label: Existing release identifier
+      description: Identify the existing release requested for deployment.
+    validations:
+      required: true

@@ -1,0 +1,18 @@
+name: Feature request
+description: Propose an improvement and describe the outcome.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem or need should this address?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome and acceptance criteria
+      description: Describe the desired outcome and how to tell when it is achieved.
+    validations:
+      required: true

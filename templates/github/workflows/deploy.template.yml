@@ -5,16 +5,34 @@ on:
     inputs:
       release_id: {description: Immutable release ID, required: true, type: string}
       environment: {description: Target GitHub Environment, required: true, type: choice, options: [development, test, production]}
-permissions:
-  contents: read
-  id-token: write
-  attestations: write
+permissions: {}
 concurrency:
   group: deploy-${{ inputs.environment }}
   cancel-in-progress: false
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.environment.outputs.environment }}
+    steps:
+      - id: environment
+        env:
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          case "$TARGET_ENVIRONMENT" in
+            development|test|production) printf 'environment=%s\n' "$TARGET_ENVIRONMENT" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unsupported deployment environment." >&2; exit 1 ;;
+          esac
+      - name: Block incomplete deployment
+        run: |
+          echo "Release verification and environment protection checks are not implemented." >&2
+          exit 1
   deploy:
-    environment: ${{ inputs.environment }}
+    needs: validate
+    environment: ${{ needs.validate.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@REVIEWED_FULL_SHA
@@ -25,4 +43,7 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy existing release
-        run: ./scripts/deploy-release.sh --release "${{ inputs.release_id }}" --environment "${{ inputs.environment }}"
+        env:
+          RELEASE_ID: ${{ inputs.release_id }}
+          TARGET_ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+        run: ./scripts/deploy-release.sh --release "$RELEASE_ID" --environment "$TARGET_ENVIRONMENT"
